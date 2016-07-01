@@ -28,6 +28,36 @@ func TestGet(t *testing.T) {
 	}
 }
 
+var getvtests = []struct {
+	key   string
+	value string
+	want  string
+}{
+	{"/db/user", "admin", "admin"},
+	{"/db/pass", "foo", "foo"},
+}
+
+func TestGetValue(t *testing.T) {
+	for _, tt := range getvtests {
+		s := New()
+		s.Set(tt.key, tt.value)
+
+		got := s.GetValue(tt.key)
+		if got != tt.want {
+			t.Errorf("Get(%q) = %v, want %v", tt.key, got, tt.want)
+		}
+	}
+}
+
+func TestGetValueWithDefault(t *testing.T) {
+	want := "defaultValue"
+	s := New()
+	got := s.GetValue("/db/user", "defaultValue")
+	if got != want {
+		t.Errorf("want %v, got %v", want, got)
+	}
+}
+
 var getalltestinput = map[string]string{
 	"/app/db/pass":               "foo",
 	"/app/db/user":               "admin",
