@@ -95,6 +95,7 @@ func (s Store) GetAllKVs() KVPairs {
 	for _, kv := range s.m {
 		ks = append(ks, kv)
 	}
+	sort.Sort(ks)
 	return ks
 }
 
