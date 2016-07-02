@@ -28,13 +28,14 @@ type Store struct {
 func New() Store {
 	s := Store{m: make(map[string]KVPair)}
 	s.FuncMap = map[string]interface{}{
-		"exists": s.Exists,
-		"ls":     s.List,
-		"lsdir":  s.ListDir,
-		"get":    s.Get,
-		"gets":   s.GetAll,
-		"getv":   s.GetValue,
-		"getvs":  s.GetAllValues,
+		"exists":    s.Exists,
+		"ls":        s.List,
+		"lsdir":     s.ListDir,
+		"get":       s.Get,
+		"gets":      s.GetAll,
+		"getallkvs": s.GetAllKVs,
+		"getv":      s.GetValue,
+		"getvs":     s.GetAllValues,
 	}
 	return s
 }
