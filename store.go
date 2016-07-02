@@ -89,7 +89,7 @@ func (s Store) GetAll(pattern string) KVPairs {
 
 // GetAllKVs returns all KV-Pairs
 func (s Store) GetAllKVs() KVPairs {
-	ks := make(KVPairs, len(s.m))
+	ks := make(KVPairs, 0)
 	s.RLock()
 	defer s.RUnlock()
 	for _, kv := range s.m {
