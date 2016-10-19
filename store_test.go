@@ -105,7 +105,6 @@ func TestGetAll(t *testing.T) {
 
 func TestDel(t *testing.T) {
 	s := New()
-	s.Set("/", "one_root_node_is_needed") // https://github.com/derekparker/trie/issues/4
 	s.Set("/app/port", "8080")
 	want := KVPair{"/app/port", "8080"}
 	got := s.Get("/app/port")
@@ -122,7 +121,6 @@ func TestDel(t *testing.T) {
 
 func TestPurge(t *testing.T) {
 	s := New()
-	s.Set("/", "one_root_node_is_needed") // https://github.com/derekparker/trie/issues/4
 	s.Set("/app/port", "8080")
 	want := KVPair{"/app/port", "8080"}
 	got := s.Get("/app/port")
