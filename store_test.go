@@ -142,61 +142,91 @@ func TestPurge(t *testing.T) {
 }
 
 var listTestMap = map[string]string{
-	"/deis/database/user":            "user",
-	"/deis/database/pass":            "pass",
-	"/deis/services/key":             "value",
-	"/deis/services/notaservice/foo": "bar",
-	"/deis/services/srv1/node1":      "10.244.1.1:80",
-	"/deis/services/srv1/node2":      "10.244.1.2:80",
-	"/deis/services/srv1/node3":      "10.244.1.3:80",
-	"/deis/services/srv2/node1":      "10.244.2.1:80",
-	"/deis/services/srv2/node2":      "10.244.2.2:80",
+	"/deis/database/user":             "user",
+	"/deis/database/pass":             "pass",
+	"/deis/services/key":              "value",
+	"/deis/services/notaservice/foo":  "bar",
+	"/deis/services/srv1/node1":       "10.244.1.1:80",
+	"/deis/services/srv1/node2":       "10.244.1.2:80",
+	"/deis/services/srv1/node3":       "10.244.1.3:80",
+	"/deis/services/srv2/node1":       "10.244.2.1:80",
+	"/deis/services/srv2/node2":       "10.244.2.2:80",
+	"/deis/prefix/node1":              "prefix_node1",
+	"/deis/prefix/node2/leafnode":     "prefix_node2",
+	"/deis/prefix/node3/leafnode":     "prefix_node3",
+	"/deis/prefix_a/node4":            "prefix_a_node4",
+	"/deis/prefixb/node5/leafnode":    "prefixb_node5",
+	"/deis/dirprefix/node1":           "prefix_node1",
+	"/deis/dirprefix/node2/leafnode":  "prefix_node2",
+	"/deis/dirprefix/node3/leafnode":  "prefix_node3",
+	"/deis/dirprefix_a/node4":         "prefix_a_node4",
+	"/deis/dirprefixb/node5/leafnode": "prefixb_node5",
+	"/deis/prefix/node2/sub1/leaf1":   "prefix_node2_sub1_leaf1",
+	"/deis/prefix/node2/sub1/leaf2":   "prefix_node2_sub1_leaf2",
 }
 
-func TestList(t *testing.T) {
+func testList(t *testing.T, want, paths []string, dir bool) {
+	var got []string
 	s := New()
 	for k, v := range listTestMap {
 		s.Set(k, v)
 	}
+	for _, filePath := range paths {
+		if dir {
+			got = s.ListDir(filePath)
+		} else {
+			got = s.List(filePath)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("List(%s) = %v, want %v", filePath, got, want)
+		}
+	}
+}
+
+func TestList(t *testing.T) {
 	want := []string{"key", "notaservice", "srv1", "srv2"}
 	paths := []string{
 		"/deis/services",
 		"/deis/services/",
 	}
-	for _, filePath := range paths {
-		got := s.List(filePath)
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("List(%s) = %v, want %v", filePath, got, want)
-		}
-	}
+	testList(t, want, paths, false)
 }
 
 func TestListForFile(t *testing.T) {
-	s := New()
-	for k, v := range listTestMap {
-		s.Set(k, v)
-	}
-	want := []string{"key"}
-	got := s.List("/deis/services/key")
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("List(%s) = %v, want %v", "/deis/services", got, want)
-	}
+	want := []string{}
+	paths := []string{"/deis/services/key"}
+	testList(t, want, paths, false)
 }
 
 func TestListDir(t *testing.T) {
-	s := New()
-	for k, v := range listTestMap {
-		s.Set(k, v)
-	}
 	want := []string{"notaservice", "srv1", "srv2"}
 	paths := []string{
 		"/deis/services",
 		"/deis/services/",
 	}
-	for _, filePath := range paths {
-		got := s.ListDir(filePath)
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("List(%s) = %v, want %v", filePath, got, want)
-		}
+	testList(t, want, paths, true)
+}
+
+func TestListForSamePrefix(t *testing.T) {
+	want := []string{"node1", "node2", "node3"}
+	paths := []string{
+		"/deis/prefix",
+		"/deis/prefix/",
 	}
+	testList(t, want, paths, false)
+}
+
+func TestListDirForSamePrefix(t *testing.T) {
+	want := []string{"node2", "node3"}
+	paths := []string{
+		"/deis/dirprefix",
+		"/deis/dirprefix/",
+	}
+	testList(t, want, paths, true)
+}
+
+func TestListForMixedLeafSubnodes(t *testing.T) {
+	want := []string{"leaf1", "leaf2"}
+	paths := []string{"/deis/prefix/node2/sub1"}
+	testList(t, want, paths, false)
 }
