@@ -2,7 +2,7 @@
 
 Simple in memory k/v store.
 
-[![Build Status](https://travis-ci.org/HeavyHorst/memkv.svg)](https://travis-ci.org/HeavyHorst/memkv) [![GoDoc](https://godoc.org/github.com/HeavyHorst/memkv?status.png)](https://godoc.org/github.com/HeavyHorst/memkv)
+[![Build Status](https://travis-ci.org/HeavyHorst/memkv.svg)](https://travis-ci.org/HeavyHorst/memkv) [![GoDoc](https://godoc.org/github.com/HeavyHorst/memkv?status.png)](https://godoc.org/github.com/HeavyHorst/memkv) [![coverage](https://gocover.io/_badge/github.com/HeavyHorst/memkv)](https://gocover.io/github.com/HeavyHorst/memkv)
 
 ## Usage
 
