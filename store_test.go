@@ -2,17 +2,19 @@ package memkv
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 )
 
 var gettests = []struct {
-	key   string
-	value string
-	want  KVPair
+	key    string
+	value  string
+	want   KVPair
+	exists bool
 }{
-	{"/db/user", "admin", KVPair{"/db/user", "admin"}},
-	{"/db/pass", "foo", KVPair{"/db/pass", "foo"}},
-	{"/missing", "", KVPair{}},
+	{"/db/user", "admin", KVPair{"/db/user", "admin"}, true},
+	{"/db/pass", "foo", KVPair{"/db/pass", "foo"}, true},
+	{"/missing", "", KVPair{}, false},
 }
 
 func TestGet(t *testing.T) {
@@ -24,6 +26,11 @@ func TestGet(t *testing.T) {
 		got := s.Get(tt.key)
 		if got != tt.want {
 			t.Errorf("Get(%q) = %v, want %v", tt.key, got, tt.want)
+		}
+
+		e := s.Exists(tt.key)
+		if e != tt.exists {
+			t.Errorf("Get(%q) = %v, want %v", tt.key, e, tt.exists)
 		}
 	}
 }
@@ -100,6 +107,38 @@ func TestGetAll(t *testing.T) {
 		if !reflect.DeepEqual([]KVPair(got), []KVPair(tt.want)) {
 			t.Errorf("GetAll(%q) = %v, want %v", tt.pattern, got, tt.want)
 		}
+	}
+}
+
+func TestGetAllValues(t *testing.T) {
+	s := New()
+	for k, v := range getalltestinput {
+		s.Set(k, v)
+	}
+	for _, tt := range getalltests {
+		want := make([]string, 0)
+		got := s.GetAllValues(tt.pattern)
+		if tt.want != nil {
+			want = []string{tt.want[0].Value, tt.want[1].Value}
+			sort.Strings(want)
+		}
+		if !reflect.DeepEqual([]string(got), []string(want)) {
+			t.Errorf("GetAll(%q) = %v, want %v", tt.pattern, got, want)
+		}
+	}
+}
+
+func TestGetAllKvs(t *testing.T) {
+	s := New()
+	want := make(KVPairs, 0)
+	for k, v := range getalltestinput {
+		s.Set(k, v)
+		want = append(want, KVPair{k, v})
+	}
+	sort.Sort(want)
+	got := s.GetAllKVs()
+	if !reflect.DeepEqual([]KVPair(got), []KVPair(want)) {
+		t.Errorf("GetAllKVs() = %v, want %v", got, want)
 	}
 }
 
