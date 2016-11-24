@@ -116,7 +116,7 @@ func TestGetAllValues(t *testing.T) {
 		s.Set(k, v)
 	}
 	for _, tt := range getalltests {
-		want := make([]string, 0)
+		var want []string
 		got := s.GetAllValues(tt.pattern)
 		if tt.want != nil {
 			want = []string{tt.want[0].Value, tt.want[1].Value}
@@ -232,7 +232,7 @@ func TestList(t *testing.T) {
 }
 
 func TestListForFile(t *testing.T) {
-	want := []string{}
+	var want []string
 	paths := []string{"/deis/services/key"}
 	testList(t, want, paths, false)
 }
