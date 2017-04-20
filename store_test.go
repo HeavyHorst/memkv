@@ -1,6 +1,7 @@
 package memkv
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
 	"testing"
@@ -268,4 +269,71 @@ func TestListForMixedLeafSubnodes(t *testing.T) {
 	want := []string{"leaf1", "leaf2"}
 	paths := []string{"/deis/prefix/node2/sub1"}
 	testList(t, want, paths, false)
+}
+
+func BenchmarkSet(b *testing.B) {
+	s := New()
+	for n := 0; n < b.N; n++ {
+		st := fmt.Sprintf("%d", n)
+		s.Set(st, st)
+	}
+}
+
+func BenchmarkGet(b *testing.B) {
+	s := New()
+	s.Set("hallomoin", "hallomoin")
+
+	var kv KVPair
+	for n := 0; n < b.N; n++ {
+		kv = s.Get("hallomoin")
+	}
+
+	if kv.Value != "hallomoin" {
+		b.Error("unexpected result: " + kv.Value)
+	}
+}
+
+func BenchmarkGetValue(b *testing.B) {
+	s := New()
+	s.Set("hallomoin", "hallomoin")
+
+	var v string
+	for n := 0; n < b.N; n++ {
+		v = s.GetValue("hallomoin")
+	}
+
+	if v != "hallomoin" {
+		b.Error("unexpected result: " + v)
+	}
+}
+
+var listResult []string
+
+func benchmarkList(b *testing.B, dir bool) {
+	s := New()
+
+	for k, v := range listTestMap {
+		s.Set(k, v)
+	}
+
+	var v []string
+	if !dir {
+		for n := 0; n < b.N; n++ {
+			v = s.List("/deis/services")
+		}
+	} else {
+		for n := 0; n < b.N; n++ {
+			v = s.ListDir("/deis/services")
+		}
+	}
+
+	listResult = v
+}
+
+func BenchmarkList(b *testing.B) {
+	benchmarkList(b, false)
+}
+
+func BenchmarkListDir(b *testing.B) {
+	benchmarkList(b, true)
 }

@@ -35,7 +35,7 @@ func New() *Store {
 	return s
 }
 
-// Delete deletes the KVPair associated with key.
+// Del deletes the KVPair associated with key.
 func (s *Store) Del(key string) {
 	s.Lock()
 	s.t.Delete(key)
@@ -148,10 +148,12 @@ func (s *Store) list(filePath string, dir bool) []string {
 	return vs
 }
 
+//List returns all keys prefixed with filePath.
 func (s *Store) List(filePath string) []string {
 	return s.list(filePath, false)
 }
 
+//ListDir returns all directories prefixed with filePath.
 func (s *Store) ListDir(filePath string) []string {
 	return s.list(filePath, true)
 }
@@ -163,6 +165,7 @@ func (s *Store) Set(key string, value string) {
 	s.Unlock()
 }
 
+//Purge removes all keys from the store.
 func (s *Store) Purge() {
 	s.Lock()
 	s.t = radix.New()
