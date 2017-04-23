@@ -279,11 +279,17 @@ func BenchmarkSet(b *testing.B) {
 	}
 }
 
+var GetResult KVPair
+
 func BenchmarkGet(b *testing.B) {
 	s := New()
 	s.Set("hallomoin", "hallomoin")
+	for k, v := range listTestMap {
+		s.Set(k, v)
+	}
 
 	var kv KVPair
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		kv = s.Get("hallomoin")
 	}
@@ -291,13 +297,21 @@ func BenchmarkGet(b *testing.B) {
 	if kv.Value != "hallomoin" {
 		b.Error("unexpected result: " + kv.Value)
 	}
+
+	GetResult = kv
 }
+
+var GetValueResult string
 
 func BenchmarkGetValue(b *testing.B) {
 	s := New()
 	s.Set("hallomoin", "hallomoin")
+	for k, v := range listTestMap {
+		s.Set(k, v)
+	}
 
 	var v string
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		v = s.GetValue("hallomoin")
 	}
@@ -305,9 +319,11 @@ func BenchmarkGetValue(b *testing.B) {
 	if v != "hallomoin" {
 		b.Error("unexpected result: " + v)
 	}
+
+	GetValueResult = v
 }
 
-var listResult []string
+var ListResult []string
 
 func benchmarkList(b *testing.B, dir bool) {
 	s := New()
@@ -317,6 +333,7 @@ func benchmarkList(b *testing.B, dir bool) {
 	}
 
 	var v []string
+	b.ResetTimer()
 	if !dir {
 		for n := 0; n < b.N; n++ {
 			v = s.List("/deis/services")
@@ -327,7 +344,7 @@ func benchmarkList(b *testing.B, dir bool) {
 		}
 	}
 
-	listResult = v
+	ListResult = v
 }
 
 func BenchmarkList(b *testing.B) {
