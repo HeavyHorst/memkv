@@ -54,8 +54,8 @@ func (s *Store) Exists(key string) bool {
 // associated with key, Get returns KVPair{}.
 func (s *Store) Get(key string) KVPair {
 	s.RLock()
-	defer s.RUnlock()
 	data, ok := s.t.Get(key)
+	s.RUnlock()
 	if !ok {
 		return KVPair{}
 	}
