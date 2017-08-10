@@ -24,7 +24,12 @@ func TestGet(t *testing.T) {
 		if tt.value != "" {
 			s.Set(tt.key, tt.value)
 		}
-		got := s.Get(tt.key)
+		got, err := s.Get(tt.key)
+		if err != nil {
+			if tt.exists {
+				t.Error(err)
+			}
+		}
 		if got != tt.want {
 			t.Errorf("Get(%q) = %v, want %v", tt.key, got, tt.want)
 		}
@@ -37,20 +42,39 @@ func TestGet(t *testing.T) {
 }
 
 var getvtests = []struct {
-	key   string
-	value string
-	want  string
+	key      string
+	value    string
+	want     string
+	existing bool
 }{
-	{"/db/user", "admin", "admin"},
-	{"/db/pass", "foo", "foo"},
+	{"/db/user", "admin", "admin", true},
+	{"/db/pass", "foo", "foo", true},
+	{"/missing", "", "", false},
 }
 
 func TestGetValue(t *testing.T) {
 	for _, tt := range getvtests {
 		s := New()
-		s.Set(tt.key, tt.value)
+		if tt.existing {
+			s.Set(tt.key, tt.value)
+		}
 
-		got := s.GetValue(tt.key)
+		got, err := s.GetValue(tt.key)
+		if err != nil {
+			if tt.existing {
+				t.Error(err)
+			}
+
+			err, ok := err.(*KeyError)
+			if !ok {
+				t.Error(err)
+			}
+
+			if err.Err != ErrNotExist {
+				t.Error(err)
+			}
+
+		}
 		if got != tt.want {
 			t.Errorf("Get(%q) = %v, want %v", tt.key, got, tt.want)
 		}
@@ -60,7 +84,10 @@ func TestGetValue(t *testing.T) {
 func TestGetValueWithDefault(t *testing.T) {
 	want := "defaultValue"
 	s := New()
-	got := s.GetValue("/db/user", "defaultValue")
+	got, err := s.GetValue("/db/user", "defaultValue")
+	if err != nil {
+		t.Error(err)
+	}
 	if got != want {
 		t.Errorf("want %v, got %v", want, got)
 	}
@@ -104,7 +131,10 @@ func TestGetAll(t *testing.T) {
 		s.Set(k, v)
 	}
 	for _, tt := range getalltests {
-		got := s.GetAll(tt.pattern)
+		got, err := s.GetAll(tt.pattern)
+		if err != nil && tt.want != nil {
+			t.Error(err)
+		}
 		if !reflect.DeepEqual([]KVPair(got), []KVPair(tt.want)) {
 			t.Errorf("GetAll(%q) = %v, want %v", tt.pattern, got, tt.want)
 		}
@@ -118,7 +148,10 @@ func TestGetAllValues(t *testing.T) {
 	}
 	for _, tt := range getalltests {
 		var want []string
-		got := s.GetAllValues(tt.pattern)
+		got, err := s.GetAllValues(tt.pattern)
+		if err != nil && tt.want != nil {
+			t.Error(err)
+		}
 		if tt.want != nil {
 			want = []string{tt.want[0].Value, tt.want[1].Value}
 			sort.Strings(want)
@@ -147,13 +180,26 @@ func TestDel(t *testing.T) {
 	s := New()
 	s.Set("/app/port", "8080")
 	want := KVPair{"/app/port", "8080"}
-	got := s.Get("/app/port")
+	got, err := s.Get("/app/port")
+	if err != nil {
+		t.Error(err)
+	}
 	if got != want {
 		t.Errorf("Get(%q) = %v, want %v", "/app/port", got, want)
 	}
 	s.Del("/app/port")
 	want = KVPair{}
-	got = s.Get("/app/port")
+	got, err = s.Get("/app/port")
+	if err != nil {
+		err, ok := err.(*KeyError)
+		if !ok {
+			t.Error(err)
+		}
+
+		if err.Err != ErrNotExist {
+			t.Error(err)
+		}
+	}
 	if got != want {
 		t.Errorf("Get(%q) = %v, want %v", "/app/port", got, want)
 	}
@@ -163,19 +209,35 @@ func TestPurge(t *testing.T) {
 	s := New()
 	s.Set("/app/port", "8080")
 	want := KVPair{"/app/port", "8080"}
-	got := s.Get("/app/port")
+	got, err := s.Get("/app/port")
+	if err != nil {
+		t.Error(err)
+	}
 	if got != want {
 		t.Errorf("Get(%q) = %v, want %v", "/app/port", got, want)
 	}
 	s.Purge()
 	want = KVPair{}
-	got = s.Get("/app/port")
+	got, err = s.Get("/app/port")
+	if err != nil {
+		err, ok := err.(*KeyError)
+		if !ok {
+			t.Error(err)
+		}
+
+		if err.Err != ErrNotExist {
+			t.Error(err)
+		}
+	}
 	if got != want {
 		t.Errorf("Get(%q) = %v, want %v", "/app/port", got, want)
 	}
 	s.Set("/app/port", "8080")
 	want = KVPair{"/app/port", "8080"}
-	got = s.Get("/app/port")
+	got, err = s.Get("/app/port")
+	if err != nil {
+		t.Error(err)
+	}
 	if got != want {
 		t.Errorf("Get(%q) = %v, want %v", "/app/port", got, want)
 	}
@@ -282,6 +344,7 @@ func BenchmarkSet(b *testing.B) {
 var GetResult KVPair
 
 func BenchmarkGet(b *testing.B) {
+	var err error
 	s := New()
 	s.Set("hallomoin", "hallomoin")
 	for k, v := range listTestMap {
@@ -291,7 +354,10 @@ func BenchmarkGet(b *testing.B) {
 	var kv KVPair
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		kv = s.Get("hallomoin")
+		kv, err = s.Get("hallomoin")
+		if err != nil {
+			b.Error(err)
+		}
 	}
 
 	if kv.Value != "hallomoin" {
@@ -304,6 +370,7 @@ func BenchmarkGet(b *testing.B) {
 var GetValueResult string
 
 func BenchmarkGetValue(b *testing.B) {
+	var err error
 	s := New()
 	s.Set("hallomoin", "hallomoin")
 	for k, v := range listTestMap {
@@ -313,7 +380,10 @@ func BenchmarkGetValue(b *testing.B) {
 	var v string
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		v = s.GetValue("hallomoin")
+		v, err = s.GetValue("hallomoin")
+		if err != nil {
+			b.Error(err)
+		}
 	}
 
 	if v != "hallomoin" {
